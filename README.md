@@ -1,6 +1,6 @@
 # Fundo — Loan Application Flow
 
-> **Video walkthrough:** _pending — add the public Loom/Jam link here before submitting._
+> **Video walkthrough:** https://www.loom.com/share/9257a3e494c64fb580071d5d4fd7afb9
 
 A small loan application flow: a form is submitted, a rule engine in the backend decides
 approve/deny, approved applications are persisted transactionally, and a background worker
