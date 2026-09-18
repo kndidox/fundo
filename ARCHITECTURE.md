@@ -16,6 +16,12 @@ backend/
     Fundo.Api.Tests/           POST /api/applications end-to-end via WebApplicationFactory.
 external-service/
   Fundo.ExternalMock/      Minimal API mock of the external system the outbox delivers to.
+frontend/
+  src/
+    app/                   The form ("/"), and the approved/denied result pages.
+    components/            ApplicationForm (client component: state, validation, submit) and
+                            the two result-page bodies (each reads its own query params).
+    lib/                   api.ts (typed fetch client), us-states.ts, denial-messages.ts.
 ```
 
 Dependencies point inward: `Api → Application/Infrastructure`, `Infrastructure → Application →
@@ -143,6 +149,28 @@ the dispatcher, which is the actual owner of delivery guarantees; a "real" exter
 be expected to be idempotent on `(ssn)`, which is why update uses `PUT` keyed by SSN rather than
 a generated external ID the outbox would have to track.
 
+## The frontend
+
+Next.js (App Router, TypeScript, Tailwind). Three routes: `/` (the form), `/approved` and
+`/denied` (result pages) — matching the brief's language ("denied users are redirected to a
+denied page") literally rather than showing the result inline.
+
+- **`ApplicationForm` is the only stateful piece** — plain `useState`, no form library. Nine
+  fields in one form doesn't need React Hook Form or similar; it would be a dependency with
+  nothing to do.
+- **Client-side validation is UX only** — required fields, SSN/ZIP format, amount > 0. It never
+  duplicates a deny *rule*: state is a `<select>` of the 50 states + DC (so the 2-letter format
+  the backend expects is structurally guaranteed), but "NY is denied" is never checked in the
+  browser. That decision lives in exactly one place — the backend's rule engine — on purpose.
+- **Result passed via query params** (`router.push("/approved?applicationId=...")`) rather than
+  a context/store — it's two or three values crossing one navigation, not shared app state.
+- **`lib/denial-messages.ts` maps `reason` to copy, with a generic fallback for anything it
+  doesn't recognize** — a direct consequence of the backend's `reason` being free-form text, not
+  a closed enum (see "The rule engine" above): a new backend rule can ship a denial reason the
+  frontend has never seen, and it still renders something sensible.
+- **Network/server errors surface as a banner on the form itself**, not a redirect — the user's
+  input isn't lost, and they can retry without retyping everything.
+
 ## Trade-offs (what's deliberately left out)
 
 - **No repository interfaces per entity** — `IFundoDbContext` exposing `DbSet<T>` is the only
@@ -157,8 +185,10 @@ a generated external ID the outbox would have to track.
 - **No admin UI for `rule_definitions`** — rules are managed by SQL/migration today. A real
   product would want a screen for this; out of scope here.
 - **No authentication** — explicitly out of scope per the brief.
-- **No Docker** — everything runs with `dotnet run` against a local Postgres instance; the brief
-  allows either, and this is simpler for a two-day exercise with no other infrastructure to
-  coordinate.
-- **Frontend not yet built** — this repository currently covers the backend and the mock service
-  only.
+- **No Docker** — everything runs with `dotnet run`/`npm run dev` against a local Postgres
+  instance; the brief allows either, and this is simpler for a two-day exercise with no other
+  infrastructure to coordinate.
+- **No frontend automated tests** — the brief's testing guidance ("cover what matters: the rule
+  engine, the returning-customer path, and the endpoint") is backend-focused; the frontend is a
+  thin, mostly-presentational layer over an already-tested API. `npm run build` type-checks and
+  lints it on every run.

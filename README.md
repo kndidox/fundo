@@ -6,9 +6,8 @@ A small loan application flow: a form is submitted, a rule engine in the backend
 approve/deny, approved applications are persisted transactionally, and a background worker
 publishes the result to a mock external service over HTTP.
 
-This repository currently contains the **backend** (.NET API + the mock external service) and
-the PostgreSQL schema. The Next.js frontend is a separate, not-yet-started piece of this
-repository (see `frontend/`, currently empty) — see `ARCHITECTURE.md` for the trade-off note.
+This repository contains the **backend** (.NET API + the mock external service), the PostgreSQL
+schema, and the **frontend** (Next.js — the form, plus approved/denied result pages).
 
 See `ARCHITECTURE.md` for how it's built and why.
 
@@ -17,6 +16,7 @@ See `ARCHITECTURE.md` for how it's built and why.
 ## Prerequisites
 
 - [.NET SDK 10](https://dotnet.microsoft.com/download) — `dotnet --version` should print `10.x`.
+- [Node.js 20+](https://nodejs.org/) — `node --version`.
 - PostgreSQL running locally with an empty database named `fundo`.
 - The [`dotnet-ef`](https://learn.microsoft.com/ef/core/cli/dotnet) global tool (installed below if you don't have it).
 
@@ -43,8 +43,8 @@ in `fundo`, and seeds the two required deny rules (state `NY`, SSN blacklist) as
 
 ## 3. Run everything
 
-Open two terminals (both projects need to be running for the background event to actually
-reach the external service):
+Open three terminals (all three need to be running — the frontend calls the API, and the API's
+background worker calls the mock service):
 
 ```bash
 # Terminal 1 — the mock external service, listens on http://localhost:5080
@@ -52,11 +52,19 @@ dotnet run --project external-service/Fundo.ExternalMock/Fundo.ExternalMock.cspr
 
 # Terminal 2 — the API, listens on http://localhost:5200
 dotnet run --project backend/src/Fundo.Api/Fundo.Api.csproj
+
+# Terminal 3 — the frontend, listens on http://localhost:3000
+cd frontend
+npm install   # first time only
+cp .env.local.example .env.local   # first time only
+npm run dev
 ```
 
-Swagger/OpenAPI UI is available at `http://localhost:5200/openapi/v1.json` in Development.
+Open `http://localhost:3000` and submit the form — see "Test data" below for what to enter to
+get each outcome. Swagger/OpenAPI UI for the API is available at
+`http://localhost:5200/openapi/v1.json` in Development.
 
-Submit an application:
+You can also hit the API directly:
 
 ```bash
 curl -X POST http://localhost:5200/api/applications \
@@ -87,6 +95,9 @@ dotnet test backend/Fundo.slnx
   denial paths, and rollback-on-failure), against a real relational SQLite database (EF Core's
   InMemory provider doesn't support real transactions, so it isn't used anywhere in this repo).
 - `Fundo.Api.Tests` — the `POST /api/applications` endpoint end-to-end via `WebApplicationFactory`.
+
+The frontend has no automated tests (`npm run build` in `frontend/` type-checks and lints it) —
+see Trade-offs in `ARCHITECTURE.md`.
 
 ---
 
