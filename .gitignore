@@ -1,0 +1,16 @@
+## .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+TestResults/
+
+## Node / Next.js (frontend, once added)
+node_modules/
+.next/
+out/
+
+## OS
+.DS_Store
+Thumbs.db

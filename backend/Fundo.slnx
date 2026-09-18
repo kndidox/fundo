@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Fundo.Api/Fundo.Api.csproj" />
+    <Project Path="src/Fundo.Application/Fundo.Application.csproj" />
+    <Project Path="src/Fundo.Domain/Fundo.Domain.csproj" />
+    <Project Path="src/Fundo.Infrastructure/Fundo.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Fundo.Api.Tests/Fundo.Api.Tests.csproj" />
+    <Project Path="tests/Fundo.Application.Tests/Fundo.Application.Tests.csproj" />
+    <Project Path="tests/Fundo.Domain.Tests/Fundo.Domain.Tests.csproj" />
+  </Folder>
+</Solution>
